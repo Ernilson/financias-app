@@ -3,6 +3,9 @@ import React from 'react';
 import Card from '../components/card';
 import FormGroup from '../components/form-group';
 import { withRouter } from 'react-router-dom';
+import UsurioService from '../app/service/Usuarioservice'
+import { mensagemSucesso, mensagemErro} from '../components/toastr'
+
 
 class CadastroUsuario extends React.Component {
 
@@ -13,8 +16,56 @@ class CadastroUsuario extends React.Component {
         senhaNovamente:''
     }
 
+    constructor (){
+        super()
+            this.service = new UsurioService();
+    }
+
+    validador(){
+        const mgs = []
+
+        if(!this.state.nome){
+            mgs.push('O campo nome não pode ficar vasio !')
+        }
+
+        if(!this.state.email){
+            mgs.push('O campo email não pode ficar vasio !')
+        }else if (!this.state.email.match(/^[a-z0-9.]+@[a-z0-9]+\.[a-z]/)) {
+           mgs.push('Informe um email valido!') 
+        }
+
+        if (!this.state.senha || !this.state.senhaNovamente) {
+            mgs.push('Digite a senha novamente')  
+        }else if (this.state.senha !== this.state.senhaNovamente) {
+            mgs.push('A senhas não estão iguais')
+        }
+        
+        return mgs;
+    }
+
     cadastrar = () =>{
-         console.log(this.state)
+         const msgs = this.validador();
+         if (msgs && msgs.length > 0) {
+             msgs.forEach((msg, index ) =>{
+                 mensagemErro(msg)
+             });
+             return false;
+         }
+          
+         const usuario ={
+             nome: this.state.nome,
+             email: this.state.email,
+             senha: this.state.senha
+         }
+
+         this.service.salvar(usuario)
+         .then( resposta =>{
+             mensagemSucesso('Usuário cadastrado com sucesso! Faça login para acessa o sistema!')
+             this.props.history.push('/login')
+         }).catch(error => {
+            mensagemErro(error.resposta.data)
+         })
+            
     }
 
     cancelar = () => {
